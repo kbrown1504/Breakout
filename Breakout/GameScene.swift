@@ -60,23 +60,27 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ball.physicsBody?.angularDamping = 0
         ball.physicsBody?.linearDamping = 0
         ball.physicsBody?.isDynamic = true
+        ball.physicsBody?.contactTestBitMask = PhysicsCategory.Ball
         addChild(ball)
         
         paddle = SKShapeNode(rect: CGRect(x: 0 - frame.width / 10, y: -frame.height / 4, width: frame.width / 5, height: 30))
         paddle.fillColor = SKColor.purple
         
-        paddle.physicsBody = SKPhysicsBody(edgeLoopFrom: CGRect(x: paddle.position.x, y: paddle.position.y, width: paddle.frame.width, height: paddle.frame.height))
+        paddle.physicsBody = SKPhysicsBody(edgeLoopFrom: paddle.frame)
         paddle.physicsBody?.isDynamic = true
         paddle.physicsBody?.friction = 0
+        paddle.physicsBody?.restitution = 1
+        paddle.physicsBody?.contactTestBitMask = PhysicsCategory.Paddle
         
         addChild(paddle)
         
         //moves the ball
-        ball.physicsBody?.applyImpulse(CGVector(dx: 10, dy: -10))
+        ball.physicsBody?.applyImpulse(CGVector(dx: 10, dy: -15))
         
         //physics for borders
         let borderBody = SKPhysicsBody(edgeLoopFrom: self.frame)
         borderBody.friction = 0
+        borderBody.restitution = 1
         self.physicsBody = borderBody
         
     }
@@ -84,18 +88,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func createBlock (x: CGFloat, y: CGFloat) -> SKShapeNode{
         let block = SKShapeNode(rect: CGRect(x: x, y: y, width: frame.width / 8, height: 20))
         block.physicsBody = SKPhysicsBody (edgeLoopFrom: CGRect(x: x, y: y, width: frame.width / 8, height: 20))
-        //rest of physics body stuff
-        return block
-    }
-    
-    func didCollideWithPaddle(nodeA : SKShapeNode, nodeB : SKShapeNode){
-        ball.physicsBody?.velocity.dy *= -1.0
-    }
-    
-    func didBegin(_ contact: SKPhysicsContact) {
-        let firstBody = contact.bodyA
-        let secondBody = contact.bodyB
+        block.physicsBody?.contactTestBitMask = PhysicsCategory.Block
+        block.physicsBody?.isDynamic = true
         
+        return block
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -116,6 +112,23 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         isFingerOnPaddle = false
+    }
+    
+    
+    func didBegin(_ contact: SKPhysicsContact) {
+        let bodyA = contact.bodyA
+        //body B seems to always be the ball
+        for block in blocks{
+            if bodyA == block.physicsBody{
+                if block.fillColor == SKColor.green{
+                    block.fillColor = SKColor.red
+                } else if block.fillColor == SKColor.red{
+                   block.removeFromParent()
+                }
+                
+            }
+        }
+        
     }
     
     
