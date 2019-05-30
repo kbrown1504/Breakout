@@ -26,6 +26,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var yMod : CGFloat = 0.0
     var blocks : [SKShapeNode] = []
     var isFingerOnPaddle = false
+    var paddle : SKShapeNode!
+    var ball : SKShapeNode!
     
     override func didMove(to view: SKView) {
         physicsWorld.gravity = CGVector.zero
@@ -49,7 +51,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             xMod = 0.0
         }
         
-        let ball = SKShapeNode(circleOfRadius: 20)
+        ball = SKShapeNode(circleOfRadius: 20)
         ball.position = CGPoint(x: 0, y: 0)
         
         ball.physicsBody = SKPhysicsBody(circleOfRadius: 20)
@@ -60,8 +62,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ball.physicsBody?.isDynamic = true
         addChild(ball)
         
-        let paddle = SKShapeNode(rect: CGRect(x: 0 - frame.width / 10, y: -frame.height / 4, width: frame.width / 5, height: 30))
+        paddle = SKShapeNode(rect: CGRect(x: 0 - frame.width / 10, y: -frame.height / 4, width: frame.width / 5, height: 30))
         paddle.fillColor = SKColor.purple
+        
+        paddle.physicsBody = SKPhysicsBody(edgeLoopFrom: CGRect(x: paddle.position.x, y: paddle.position.y, width: paddle.frame.width, height: paddle.frame.height))
+        paddle.physicsBody?.isDynamic = true
+        paddle.physicsBody?.friction = 0
+        
         addChild(paddle)
         
         //moves the ball
@@ -76,21 +83,39 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func createBlock (x: CGFloat, y: CGFloat) -> SKShapeNode{
         let block = SKShapeNode(rect: CGRect(x: x, y: y, width: frame.width / 8, height: 20))
+        block.physicsBody = SKPhysicsBody (edgeLoopFrom: CGRect(x: x, y: y, width: frame.width / 8, height: 20))
+        //rest of physics body stuff
         return block
+    }
+    
+    func didCollideWithPaddle(nodeA : SKShapeNode, nodeB : SKShapeNode){
+        ball.physicsBody?.velocity.dy *= -1.0
+    }
+    
+    func didBegin(_ contact: SKPhysicsContact) {
+        let firstBody = contact.bodyA
+        let secondBody = contact.bodyB
+        
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         let touch = touches.first
         let touchLocation = touch?.location(in: self)
-        
+        if paddle.frame.contains(touchLocation!){
+            isFingerOnPaddle = true
+        }
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        //
+        let touch = touches.first
+        let touchLocation = touch?.location(in: self)
+        if isFingerOnPaddle == true {
+            paddle.position.x = touchLocation!.x
+        }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        //
+        isFingerOnPaddle = false
     }
     
     
